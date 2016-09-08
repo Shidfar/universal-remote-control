@@ -5,6 +5,7 @@
 #ifndef UNISERVER_MYSQLAGENT_H
 #define UNISERVER_MYSQLAGENT_H
 
+#include <mysql/mysql.h>
 
 class MySqlAgent
 {
