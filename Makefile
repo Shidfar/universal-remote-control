@@ -27,18 +27,25 @@ CFLAGS = -O2 -fPIC -ggdb -I. -DPOSIX
 ###########################################
 #        Main Application Section         #
 ###########################################
-LDFLAGS = -lmosquittopp -ljsoncpp -lpthread -lcurl `mysql_config --cflags --libs`
+LDFLAGS = -lmosquittopp -ljsoncpp -lpthread `mysql_config --cflags --libs` -lmicrohttpd
 SOURCES = main.cpp ServerEngine.cpp MqttClient.cpp MySqlAgent.cpp HttpServer.cpp
-EXECUTABLE = ServerEgine
+EXECUTABLE = ServerEngine
 OBJECTS = $(SOURCES:.cpp=.o)
-$(EXECUTABLE): $(OBJECTS) $(CXX) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+$(EXECUTABLE): $(OBJECTS)
+	${CXX} $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 #####################################
 #        Clean Up Section           #
 #####################################
 
-clean: rm -f *.o rm -f `find . -name *.o` rm -f *.so rm -f $(EXECUTABLE) rm -f sql
+clean:
+	rm -rf *.o
+	rm -rf `find . -name *.o`
+	rm -rf *.so
+	rm -rf $(EXECUTABLE) eesocket
+	rm -f sql
 
-all: $(EXECUTABLE)
+
+all: $(LIBRARY) $(SQLITEPLUGINNAME) $(PLUGINNAME) $(EXECUTABLE)
 
 remake: clean all
