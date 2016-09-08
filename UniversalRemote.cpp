@@ -11,7 +11,9 @@
 #define RED 29
 
 #define EXTLED 27
-//#define FREE_PIN 28
+
+//#define FREE_PIN 28 //---------
+
 #define ENABLER 7
 
 #define IRLED 30
