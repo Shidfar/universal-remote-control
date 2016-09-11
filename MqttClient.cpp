@@ -4,13 +4,14 @@
 
 #include "MqttClient.h"
 
-MqttClient::MqttClient()
+MqttClient::MqttClient() : mosquittopp(MQTTCLIENT)
 {
     loop_stop();
     mosqpp::lib_cleanup();
     this->host = "localhost";
     this->id = MQTTCLIENT;
     this->port = MQTTPORT;
+    this->topic = "/pub/1/cc3200/";
     this->keepalive = 60;
     connect_async(this->host, this->port, this->keepalive);
     loop_start();
@@ -25,6 +26,7 @@ void MqttClient::on_connect(int rc)
     if ( rc == 0 )
     {
         printf(" MqttClient Connected\n");
+	printf(" ClientId: %s\n Subscribed to:%s\n", this->id, this->topic);
         subscribe(0, this->topic, 0);
     }
     else
