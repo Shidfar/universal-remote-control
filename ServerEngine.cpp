@@ -12,6 +12,8 @@ ServerEngine::ServerEngine()
     this->mqttClient = new MqttClient();
     this->mqttClient->SetCallback(mqttCallback, this);
 
+    this->mySqlAgent = new MySqlAgent();
+
     pthread_t test_thread;
     int err = pthread_create(&test_thread, NULL, tester, this->mqttClient);
 }

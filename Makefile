@@ -28,7 +28,7 @@ CFLAGS = -O2 -fPIC -ggdb -I. -DPOSIX
 #        Main Application Section         #
 ###########################################
 LDFLAGS = -lmosquittopp -ljsoncpp -lpthread `mysql_config --cflags --libs` -lmicrohttpd
-SOURCES = main.cpp ServerEngine.cpp MqttClient.cpp MySqlAgent.cpp HttpServer.cpp
+SOURCES = main.cpp ServerEngine.cpp MqttClient.cpp MySqlAgent.cpp HttpServer.cpp ConfigReader.cpp
 EXECUTABLE = ServerEngine
 OBJECTS = $(SOURCES:.cpp=.o)
 $(EXECUTABLE): $(OBJECTS)
