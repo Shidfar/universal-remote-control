@@ -8,6 +8,7 @@
 #include "MqttClient.h"
 #include "MySqlAgent.h"
 #include "HttpServer.h"
+#include "MongoAgent.h"
 
 class ServerEngine
 {
