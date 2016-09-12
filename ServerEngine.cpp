@@ -21,7 +21,7 @@ int mqttCallback(const mosquitto_message* message, void* context)
     ServerEngine *serverEngine = (ServerEngine*) context;
     string topic = string((char*) message->topic);
     string payload = string((char*) message->payload);
-    printf("> %s\n> %s", topic.c_str(), payload.c_str());
+    printf("> %s\n> %s\n", topic.c_str(), payload.c_str());
     return 0;
 }
 
@@ -31,11 +31,14 @@ void *tester(void* context)
     string str;
     while(true)
     {
-        cin >>str;
+        getline(cin, str);
         if(str == ".q")
             break;
+	if(str == "")
+	    continue;
         else
         {
+	    cout<<" Sending: " <<str <<endl;
             char topic[] = "/cc3200/";
             int ret = mqttClient->publish(NULL, topic, (int) str.length(), str.c_str(), 1, false);
         }
