@@ -88,10 +88,10 @@ int answer_to_connection (void *cls, struct MHD_Connection *connection, const ch
     cout<<"access" <<endl;
 
     response = MHD_create_response_from_fd_at_offset (sbuf.st_size, fd, 0);
-    MHD_add_response_header (response, "Refresh: 2; url=http://localhost:8888/", MIMETYPE);
-//    MHD_add_response_header (response, MHD_HTTP_HEADER_CONTENT_TYPE, MIMETYPE);
+    //MHD_add_response_header (response, "Refresh: 2; url=http://localhost:8888/", MIMETYPE);
+    MHD_add_response_header (response, MHD_HTTP_HEADER_CONTENT_TYPE, MIMETYPE);
 
-    response = MHD_create_response_from_buffer(strlen("hey there"), (void*)"hey there", MHD_RESPMEM_PERSISTENT);
+    //response = MHD_create_response_from_buffer(strlen("hey there"), (void*)"hey there", MHD_RESPMEM_PERSISTENT);
 
     ret = MHD_queue_response (connection, MHD_HTTP_OK, response);
     MHD_destroy_response (response);
