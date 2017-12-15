@@ -11,6 +11,8 @@
 #include <mosquitto.h>
 #include <mosquittopp.h>
 
+#include "GlobalDefs.h"
+
 using namespace std;
 
 typedef int (*mqttcallback_fn)(const mosquitto_message* message, void * context);
