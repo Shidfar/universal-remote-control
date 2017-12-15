@@ -3,17 +3,13 @@
 #include <WifiIPStack.h>
 #include <Countdown.h>
 #include <MQTTClient.h>
-#include <aJSON.h>
-#include <SLFS.h>
 
 #define YELLOW 9
 #define GREEN 10
 #define RED 29
 
 #define EXTLED 27
-
-//#define FREE_PIN 28 //---------
-
+//#define FREE_PIN 28
 #define ENABLER 7
 
 #define IRLED 30
@@ -31,7 +27,7 @@
 char ssid[] = "controll@unifi";
 char pswd[] = "Dushanbe14";
 
-char hostname[] = "192.168.0.10";//"iot.eclipse.org";
+char hostname[] = "192.168.0.4";//"iot.eclipse.org";
 int port = 1883;
 
 const char* subs = "/cc3200/";
@@ -62,10 +58,41 @@ void initRef()
     REF_TABC[c] = char(35), REF_TABN[35] = c++;
     REF_TABC[c] = char(36), REF_TABN[36] = c++;
 }
+int msgc;
+char outcomes[68];
+void partialize(char* str, int len)
+{
+  int i;
+  msgc = 0;
+  outcomes[msgc++] = '{';
+  outcomes[msgc++] = '[';
+  for(i=0; i<len; i++)
+  {
+    if(str[i] == ' ' && outcomes[msgc-1] == ' ')
+    {
+      msgc--;
+    }
+    if(msgc > 56 && str[i] == ' ')
+    {
+      outcomes[msgc++] = ']', outcomes[msgc++] = '\0';
+      send_message(outcomes);
+      delay(23);
+      msgc = 0, outcomes[msgc++] = '[';
+      continue;
+    }
+    outcomes[msgc++] = str[i];
+  }
+  outcomes[msgc++] = ']';
+  outcomes[msgc++] = '}';
+  outcomes[msgc++] = '\0';
 
+  delay(23);
+  send_message(outcomes);
+}
 void send_codes()
 {
   //cc = 0;
+  bzero(printbuf, 801);
   sprintf(printbuf, "");
   for (uint8_t i = 0; i < currentpulse-1; i++)
   {
@@ -82,22 +109,102 @@ void send_codes()
   Serial.print("to cloud: ");
   Serial.println(printbuf);
   
-  if (!client.isConnected())
-    connect_mqtt();
-  
-  MQTT::Message message;
-  message.qos = MQTT::QOS2;
-  message.retained = false;
-  message.dup = false;
-  message.payload = (void*)printbuf;
-  message.payloadlen = strlen(printbuf)+1;
-  int rc = client.publish(pubs, message);
+  partialize(printbuf, strlen(printbuf));
 }
 
+void fill_pulses(char *str)
+{
+  currentpulse = 1;
+  char ine[4];
+  int cc = 0;
+  for(int i=0; i<strlen(str); i++)
+  {
+   if(str[i] == ' ')
+   {
+       ine[cc] = '\0';
+       pulses[currentpulse/2][(currentpulse)%2] = decode(ine, strlen(ine));
+       currentpulse++;
+       cc = 0;
+       continue;
+   }
+   else
+   {
+       ine[cc++] = str[i];
+   }
+  }
+  currentpulse/=2;
+  digitalWrite(EXTLED, LOW);
+  delay(23);
+  test_ir();
+  delay(23);
+  digitalWrite(EXTLED, HIGH);
+}
+
+char tline[68];
+char fulin[805];
+bool lntgl;
+int fild;
+int fcnt;
+void push_message(char* str, int len)
+{
+  int i;
+  lntgl = false;
+  for(i=0; i<len; i++)
+  {
+    if(str[i] == '{')
+    {
+      fild = 1;
+      fcnt = 0;
+      continue;
+    }
+    if(str[i] == '[')
+    {
+      lntgl = true;
+      continue;
+    }
+    if(str[i] == ']')
+    {
+      lntgl = false;
+      continue;
+    }
+    if(str[i] == '}')
+    {
+      fild = 2;
+      fulin[fcnt] = '\0';
+      break;
+    }
+
+    if(!lntgl)
+      break;
+    if(lntgl)
+    {
+      if(str[i] == ' ' && fulin[fcnt-1] == ' ')
+        fcnt--;
+      fulin[fcnt++] = str[i];
+    }
+  }
+  fulin[fcnt++] = ' ';
+}
+void messageArrived(MQTT::MessageData& md)
+{
+  MQTT::Message &message = md.message;
+  bzero(tline, 68);
+  sprintf(tline, "%s", (char*)message.payload);
+  Serial.println(tline);
+  fild = 0;
+  push_message(tline, strlen(tline));
+  if(fild == 2)
+  {
+    Serial.println(fulin);
+    fill_pulses(fulin);
+    bzero(fulin, 805);
+  }
+
+}
 void setup()
 {
   Serial.begin(9600);
-  SerFlash.begin();
+  //  SerFlash.begin();
   initRef();
   pinMode(YELLOW, OUTPUT);
   digitalWrite(YELLOW, HIGH);
@@ -130,6 +237,7 @@ void setup()
       Serial.println("MQTT is connected.");
     }
   }
+  send_message("(c) Shidfar H.");
 }
 
 void loop()
@@ -154,10 +262,10 @@ void TreeButtons()
     {
       Serial.println("Learning");
       digitalWrite(GREEN, HIGH);
-      delayMicroseconds(23);
+      delayMicroseconds(50);
       currentpulse=0;
       read_ir();
-      delayMicroseconds(23);
+      delayMicroseconds(50);
       digitalWrite(GREEN, LOW);
       Serial.println("Done");
     }
@@ -165,18 +273,18 @@ void TreeButtons()
     {
       Serial.println("Sending IR");
       digitalWrite(RED, HIGH);
-      delayMicroseconds(23);
+      delayMicroseconds(50);
       test_ir();
-      delayMicroseconds(23);
+      delayMicroseconds(50);
       digitalWrite(RED, LOW);
       Serial.println("Done");
     }
     if(digitalRead(CLOUDIFY) == LOW)
     {
       Serial.println("Sending Message");
-      delayMicroseconds(23);
+      delayMicroseconds(50);
       send_codes();
-      delayMicroseconds(23);
+      delayMicroseconds(50);
       Serial.println("Done");
     }
     if(digitalRead(ENABLER) == LOW)
@@ -268,6 +376,7 @@ void pulseIR(long microsecs)
 }
 bool connect_wifi()
 {
+  Serial.println("");
   Serial.println("Connecting to WiFi.");
   int c = 0;
   while(WiFi.status() != WL_CONNECTED)
@@ -285,6 +394,7 @@ bool connect_wifi()
 }
 void obtain_ip()
 {
+  Serial.println("");
   Serial.println("Obtaining IP.");
   int c = 0;
   while (WiFi.localIP() == INADDR_NONE)
@@ -331,37 +441,7 @@ void connect_mqtt()
     digitalWrite(GREEN, LOW);
   }
 }
-void messageArrived(MQTT::MessageData& md)
-{
-  char cloudbuf[801];
-  MQTT::Message &message = md.message;
-  sprintf(cloudbuf, "%s", (char*)message.payload);
-  Serial.println(cloudbuf);
-  /*currentpulse = 1;
-  char ine[4];
-  int cc = 0;
-  for(int i=0; i<strlen(cloudbuf); i++)
-  {
-   if(cloudbuf[i] == ' ')
-   {
-       ine[cc] = '\0';
-       pulses[currentpulse/2][(currentpulse)%2] = decode(ine, strlen(ine));
-       currentpulse++;
-       cc = 0;
-       continue;
-   }
-   else
-   {
-       ine[cc++] = cloudbuf[i];
-   }
-  }
-  currentpulse/=2;
-  digitalWrite(EXTLED, LOW);
-  delayMicroseconds(23);
-  test_ir();
-  delayMicroseconds(23);
-  digitalWrite(EXTLED, HIGH);*/
-}
+
 char* encode(long x)
 {
     int lg = 0;
@@ -388,4 +468,19 @@ long decode(char* buf, int len)
         c*=64;
     }
     return ans;
+}
+void send_message(char *str)
+{
+  if (!client.isConnected())
+    connect_mqtt();
+  Serial.println(pubs);
+  Serial.println(str);
+  
+  MQTT::Message message;
+  message.qos = MQTT::QOS0;
+  message.retained = false;
+  message.dup = false;
+  message.payload = (void*)str;
+  message.payloadlen = strlen(str)+1;
+  int rc = client.publish(pubs, message);
 }
