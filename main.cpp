@@ -10,4 +10,5 @@ int main()
 {
     ServerEngine *serverEngine = new ServerEngine();
     while(true) usleep(10000);
+    return 0;
 }
